@@ -1,12 +1,12 @@
 
 picoClock
 ========================
-Instructions to build a pico-based digital clock showing the 
-  + time, 
+Instructions to build a pico-based digital table clock showing the 
+  + time
   + date and 
   + day of the week.
 
-The code is entirely micropython-based. The build is not only easy, but also solder-free in case you have a pre-soldered Raspberry Pi Pico.
+The code is entirely micropython-based and pulls time data from the RTC chip - an internet connection is not needed. Assembly of the device is really easy and even solder-free in case you have a pre-soldered Raspberry Pi Pico.
 <br></br>
 | Finished picoClock   |
 | ------------- |
@@ -16,7 +16,6 @@ The code is entirely micropython-based. The build is not only easy, but also sol
 + [Raspberry Pi Pico](https://www.raspberrypi.com/products/raspberry-pi-pico/)
 + [Pimoroni Pico Display](https://www.waveshare.com/pico-oled-2.23.htm)
 + [Waveshare RTC Module DS3231](https://www.waveshare.com/pico-rtc-ds3231.htm)
-
 
 ## Setup
 1. Flash the custom Pimoroni MicroPython build onto the board, which already includes the driver for the display. You can find it [here](https://github.com/pimoroni/pimoroni-pico/releases/latest/).
