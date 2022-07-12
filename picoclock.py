@@ -25,9 +25,31 @@ width = display.get_width()
 height = display.get_height()
 # ...language
 language = 0
+# ...colon animation
+colonblink = 0
 
 # Initialize display
 display.init(bytearray(width * height * 2))
+
+# Function for checking button A (switch language)
+def check_for_buttonA():
+    global language
+
+    if display.is_pressed(display.BUTTON_A):
+        language += 1
+        if language >= 4:
+            language = 0
+    return language
+
+# Function for checking button B (toggle colon blink)
+def check_for_buttonB():
+    global colonblink
+
+    if display.is_pressed(display.BUTTON_B):
+        colonblink += 1
+        if colonblink >= 2:
+            colonblink = 0
+    return colonblink
 
 # Function for checking Button X (brightness adjustment)
 def check_for_buttonX():
@@ -39,25 +61,15 @@ def check_for_buttonX():
         white = 125
     return white
 
-# Function for checking button A (toggle to show/hide seconds)
-def check_for_buttonA():
+# Function for checking button Y (show/hide seconds)
+def check_for_buttonY():
     global showseconds
 
-    if display.is_pressed(display.BUTTON_A) and showseconds == 0:
-        showseconds = 1
-    elif display.is_pressed(display.BUTTON_A) and showseconds == 1:
-        showseconds = 0
-    return showseconds
-
-# Function for checking button Y (switch language)
-def check_for_buttonY():
-    global language
-
     if display.is_pressed(display.BUTTON_Y):
-        language += 1
-        if language >= 4:
-            language = 0
-    return language
+        showseconds += 1
+        if showseconds >= 2:
+            showseconds = 0
+    return showseconds
 
 # Function for all things time
 class ds3231(object):
@@ -97,14 +109,30 @@ class ds3231(object):
         now_time = binascii.unhexlify((second + " " + minute + " " + hour + " " + week + " " + day + " " + month + " " + year).replace(' ',''))
         self.bus.writeto_mem(int(self.address),int(self.start_reg),now_time)
     
+    # Make a colon blink
+    def colonblink(self):
+        t = self.bus.readfrom_mem(int(self.address),int(self.start_reg),7)
+        a = t[0]&0x7F  #second
+        
+        if colonblink == 1:
+            if (a % 2) == 0:
+                colon = ":"
+            else:
+                colon = " "
+        else:
+            colon = ":"
+            
+        return colon
+    
     # Form human-readable time format
     def read_time(self):
         t = self.bus.readfrom_mem(int(self.address),int(self.start_reg),7)
         a = t[0]&0x7F  #second
         b = t[1]&0x7F  #minute
         c = t[2]&0x3F  #hour
+        colon = rtc.colonblink()
 
-        current_time = ("%02x:%02x" %(t[2],t[1]))
+        current_time = ("%02x" + colon + "%02x" %(t[2],t[1]))
         return current_time
         #print("%02x.%02x.20%x %02x:%02x:%02x %s" %(t[4],t[5],t[6],t[2],t[1],t[0],self.w[t[3]-1]))
     
@@ -214,7 +242,7 @@ while True:
     if check_for_buttonA() == 0:
         display.text(rtc.read_time(), 33,8,240, 8)
     else:
-        display.text(rtc.read_time()+":"+str(rtc.sec()), 12,15,240, 6)
+        display.text(rtc.read_time() + rtc.colonblink() + str(rtc.sec()), 12,15,240, 6)
     # Choose an orange color and draw the day of the week and the date
     display.set_pen(255, 128, 0)
     display.text(rtc.day_name(), rtc.day_widthvalue(),75,240,3)
