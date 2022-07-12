@@ -12,6 +12,12 @@ The code is entirely micropython-based and pulls time data from the RTC chip - a
 | ------------- |
 | [![](https://i.imgur.com/uGB1qjq.png?raw=true)](https://i.imgur.com/uGB1qjq.png)   |
 
+## Functionality
++ Button A: Switch language of the displayed day of the week (German, English, Spanish and French).
++ Button B: Toggle blinking animation of the colon(s) in the time display.
++ Button X: Adjust brightness.
++ Button Y: Show/hide seconds in the time display.
+
 ## Hardware
 + [Raspberry Pi Pico](https://www.raspberrypi.com/products/raspberry-pi-pico/)
 + [Pimoroni Pico Display](https://www.waveshare.com/pico-oled-2.23.htm)
