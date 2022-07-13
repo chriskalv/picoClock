@@ -3,78 +3,100 @@
 ############## BY CK #############
 ##################################
 
-# Libraries and global variables for...
-# ...Pimoroni pico display
-import picodisplay as display
+# --------------------------------
+# --------Global settings---------
+# Birthday Wish:
+birthday_wish_enabled = 0
+birthday_month = 99
+birthday_day = 5
+# --------------------------------
+
+# Libraries for...
+# ...Pimoroni Pico display
+from picographics import PicoGraphics, DISPLAY_PICO_DISPLAY
+from pimoroni import Button
+# ...Waveshare RTC module / time
 from machine import Pin, I2C
-I2C_PORT = 0
-I2C_SDA = 20
-I2C_SCL = 21
-ALARM_PIN = 3
-# ...time
-import utime
 import binascii
+import time
 # ...garbage collector
 import gc
 gc.enable()
-# ...colors
-white = 165
-showseconds = 0
-# ...display dimensions
-width = display.get_width()
-height = display.get_height()
-# ...language
-language = 0
-# ...colon animation
-colonblink = 0
 
-# Initialize display
-display.init(bytearray(width * height * 2))
+# Set up hardware/global variables
+# Pimoroni Pico display
+brightness = 0.5
+display = PicoGraphics(display=DISPLAY_PICO_DISPLAY, rotate=0)
+width, height = display.get_bounds()
+display.set_backlight(brightness)
+# Waveshare RTC module
+I2C_PORT = 1
+I2C_SDA = 6
+I2C_SCL = 7
+'''
+I2C_PORT = 0   # Another version of the Waveshare RTC module might need this I2C configuration instead
+I2C_SDA = 20
+I2C_SCL = 21
+'''
+# Language
+language = 0
+# Display formatting
+showseconds = 0
+colonblink = 0
+# Colors
+black = display.create_pen(0, 0, 0)
+white = display.create_pen(255, 255, 255)
+orange = display.create_pen(255, 128, 0)
+# Buttons
+button_a = Button(12)
+button_b = Button(13)
+button_x = Button(14)
+button_y = Button(15)
+
+# Clear the screen once
+display.set_pen(black)
+display.clear()
+display.update()
 
 # Function for checking button A (switch language)
-def check_for_buttonA():
-    global language
-
-    if display.is_pressed(display.BUTTON_A):
+def buttoncheck_a():
+    if button_a.read():
+        global language
         language += 1
         if language >= 4:
             language = 0
-    return language
+        return language
 
 # Function for checking button B (toggle colon blink)
-def check_for_buttonB():
-    global colonblink
-
-    if display.is_pressed(display.BUTTON_B):
+def buttoncheck_b():
+    if button_b.read():
+        global colonblink
         colonblink += 1
         if colonblink >= 2:
             colonblink = 0
-    return colonblink
+        return colonblink
 
 # Function for checking Button X (brightness adjustment)
-def check_for_buttonX():
-    global white
-
-    if display.is_pressed(display.BUTTON_X) and white == 125:
-        white = 165
-    elif display.is_pressed(display.BUTTON_X) and white == 165:
-        white = 125
-    return white
+def buttoncheck_x():
+    if button_x.read():
+        global brightness
+        brightness += 0.1
+        if brightness >= 1.01:
+            brightness = 0.1
+        return brightness
 
 # Function for checking button Y (show/hide seconds)
-def check_for_buttonY():
-    global showseconds
-
-    if display.is_pressed(display.BUTTON_Y):
+def buttoncheck_y():
+    if button_y.read():
+        global showseconds
         showseconds += 1
         if showseconds >= 2:
             showseconds = 0
-    return showseconds
+        return showseconds
 
 # Function for all things time
 class ds3231(object):
     
-    # Example for hour zero: 13:45:00 Mon 24 May 2021
     # NowTime = sec \ min \ hour \ week \ day \ month \ year
     NowTime = b'\x00\x45\x13\x02\x24\x05\x21'
     address = 0x68
@@ -86,7 +108,7 @@ class ds3231(object):
     # Set locale for weekdays
     if language == 0:
         w  = ["Sonntag","Montag","Dienstag","Mittwoch","Donnerstag","Freitag","Samstag"]
-    elif langauge == 1:
+    elif language == 1:
         w = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"]
     elif language == 2:
         w = ["Domingo","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"]
@@ -109,30 +131,13 @@ class ds3231(object):
         now_time = binascii.unhexlify((second + " " + minute + " " + hour + " " + week + " " + day + " " + month + " " + year).replace(' ',''))
         self.bus.writeto_mem(int(self.address),int(self.start_reg),now_time)
     
-    # Make a colon blink
-    def colonblink(self):
-        t = self.bus.readfrom_mem(int(self.address),int(self.start_reg),7)
-        a = t[0]&0x7F  #second
-        
-        if colonblink == 1:
-            if (a % 2) == 0:
-                colon = ":"
-            else:
-                colon = " "
-        else:
-            colon = ":"
-            
-        return colon
-    
     # Form human-readable time format
     def read_time(self):
         t = self.bus.readfrom_mem(int(self.address),int(self.start_reg),7)
         a = t[0]&0x7F  #second
         b = t[1]&0x7F  #minute
         c = t[2]&0x3F  #hour
-        colon = rtc.colonblink()
-
-        current_time = ("%02x" + colon + "%02x" %(t[2],t[1]))
+        current_time = ("%02x:%02x" %(t[2],t[1]))
         return current_time
         #print("%02x.%02x.20%x %02x:%02x:%02x %s" %(t[4],t[5],t[6],t[2],t[1],t[0],self.w[t[3]-1]))
     
@@ -142,7 +147,7 @@ class ds3231(object):
         d = t[3]&0x07  #week
         e = t[4]&0x3F  #day
         f = t[5]&0x1F  #month
-        g = t[6]&0x0F  #year
+        g = t[6]&0x0F  #year 
         current_date = ("%02x.%02x.20%x" %(t[4],t[5],t[6]))
         return current_date
         #print("%02x.%02x.20%x %02x:%02x:%02x %s" %(t[4],t[5],t[6],t[2],t[1],t[0],self.w[t[3]-1]))
@@ -178,7 +183,7 @@ class ds3231(object):
         lo = t[2]&0x0F
         return hi + lo
     
-    # Form human-readable day of the week (number starts with Sunday)
+    # Form human-readable day of the week (number)
     def week(self):
         t = self.bus.readfrom_mem(int(self.address),int(self.start_reg),7)
         lo = t[3]&0x07
@@ -199,18 +204,18 @@ class ds3231(object):
         lo = t[5]&0x0F
         return hi + lo
     
-    # Form human-readable day of the week
+    # Form human-readable day of the week (text)
     def day_name(self):
-        t = self.bus.readfrom_mem(int(self.address),int(self.start_reg),7)
+        t = self.bus.readfrom_mem(int(self.address),int(self.start_reg),7)    
         # Implement a birthday wish
-        if rtc.day() == 11 and rtc.month() == 5:
+        if birthday_wish_enabled == 1 and rtc.day() == birthday_day and rtc.month() == birthday_month:
             dayname = "Happy B-Day"
         else:
             dayname = self.w[t[3]-1]
         return dayname
     
     # REDO THIS!
-    # Define indents for the days of the week
+    # Define correct indents in order to be able to center all text
     def day_widthvalue(self):
         weekday = rtc.day_name()
         if weekday == "Montag" or weekday == "Freitag" or weekday == "Samtag":
@@ -226,27 +231,58 @@ class ds3231(object):
 # RTC functionality
 rtc = ds3231(I2C_PORT,I2C_SCL,I2C_SDA)
 
-###############################################################################################
-# If the time has to be set again, uncomment the following line for one execution of the script
-#rtc.set_time('17:26:00,Dienstag,2022-05-31')
-###############################################################################################
+#########################################################################################
+# If the time has to be set again, uncomment the rtc.set_time line below, enter the     #
+# current time, execute the script once and comment the line again after that.          #
+#                                                                                       #
+# rtc.set_time('12:06:30,Mittwoch,2022-07-13')                                          #
+#########################################################################################
 
 
 while True:
-    # Black out the display
-    display.set_pen(0,0,0)
+    # Check all the buttons!
+    buttoncheck_a()
+    buttoncheck_b()
+    buttoncheck_x()
+    buttoncheck_y()
+    
+    # Set display brightness
+    display.set_backlight(brightness)
+
+    # Clear the display
+    display.set_pen(black)
     display.clear()
-    # Choose a whiteish color and draw the time
-    display.set_pen(check_for_buttonX(), check_for_buttonX(), check_for_buttonX())
-    # Show either hours:minutes or hours:minutes:seconds
-    if check_for_buttonA() == 0:
-        display.text(rtc.read_time(), 33,8,240, 8)
+    
+    # Choose a white color and draw the time (either hours:minutes or hours:minutes:seconds)
+    display.set_pen(white)
+    if showseconds == 0:
+        if colonblink == 0:
+            display.text(rtc.read_time(), 33,8,240, 8)
+            #print(rtc.read_time())
+        else:
+            if (int(rtc.sec()) % 2) == 0:
+                display.text("%02d" % (int(rtc.hour()),) + " " + "%02d" % (int(rtc.minute()),), 33,8,240, 8)
+                #print("%02d" % (int(rtc.hour()),) + " " + "%02d" % (int(rtc.minute()),))
+            else:
+                display.text("%02d" % (int(rtc.hour()),) + ":" + "%02d" % (int(rtc.minute()),), 33,8,240, 8)
+                #print("%02d" % (int(rtc.hour()),) + ":" + "%02d" % (int(rtc.minute()),))
     else:
-        display.text(rtc.read_time() + rtc.colonblink() + str(rtc.sec()), 12,15,240, 6)
+        if colonblink == 0:
+            display.text(rtc.read_time() + ":" + "%02d" % (int(rtc.sec()),), 33,8,240, 8)
+            #print(rtc.read_time() + ":" + "%02d" % (int(rtc.sec()),))
+        else:
+            if (int(rtc.sec()) % 2) == 0:
+                display.text("%02d" % (int(rtc.hour()),) + " " + "%02d" % (int(rtc.minute()),) + " " + "%02d" % (int(rtc.sec()),), 12,15,240, 6)
+                #print("%02d" % (int(rtc.hour()),) + " " + "%02d" % (int(rtc.minute()),) + " " + "%02d" % (int(rtc.sec()),))
+            else:
+                display.text("%02d" % (int(rtc.hour()),) + ":" + "%02d" % (int(rtc.minute()),) + ":" + "%02d" % (int(rtc.sec()),), 12,15,240, 6)
+                #print("%02d" % (int(rtc.hour()),) + ":" + "%02d" % (int(rtc.minute()),) + ":" + "%02d" % (int(rtc.sec()),))
+        
     # Choose an orange color and draw the day of the week and the date
-    display.set_pen(255, 128, 0)
+    display.set_pen(orange)
     display.text(rtc.day_name(), rtc.day_widthvalue(),75,240,3)
     display.text(rtc.read_date(), 31,100,240,4)
+    
     # Update the display and wait one second before executing the script again
     display.update()
-    utime.sleep(1)
+    time.sleep(1)
