@@ -13,9 +13,9 @@ The code is entirely micropython-based and pulls time data from the RTC chip - a
 | [![](https://i.imgur.com/uGB1qjq.png?raw=true)](https://i.imgur.com/uGB1qjq.png)   |
 
 ## Functionality
-+ Button A: Switch language of the displayed day of the week (German, English, Spanish and French are available).
-+ Button B: Toggle blinking animation of the colon(s) in the time display.
-+ Button X: Adjust brightness.
++ Button A: Adjust brightness (down).
++ Button B: Switch language of the displayed day of the week (German, English, Spanish and French are available).
++ Button X: Adjust brightness (up).
 + Button Y: Show/hide seconds in the time display.
 
 ## Hardware
