@@ -7,7 +7,7 @@
 # --------Global settings---------
 # Birthday Wish:
 birthday_wish_enabled = 0
-birthday_month = 99
+birthday_month = 12
 birthday_day = 5
 # --------------------------------
 
@@ -139,7 +139,7 @@ class ds3231(object):
         c = t[2]&0x3F  #hour
         current_time = ("%02x:%02x" %(t[2],t[1]))
         return current_time
-        #print("%02x.%02x.20%x %02x:%02x:%02x %s" %(t[4],t[5],t[6],t[2],t[1],t[0],self.w[t[3]-1]))
+        # print("%02x.%02x.20%x %02x:%02x:%02x %s" %(t[4],t[5],t[6],t[2],t[1],t[0],self.w[t[3]-1]))
     
     # Form human-readable date
     def read_date(self):
@@ -150,7 +150,7 @@ class ds3231(object):
         g = t[6]&0x0F  #year 
         current_date = ("%02x.%02x.20%x" %(t[4],t[5],t[6]))
         return current_date
-        #print("%02x.%02x.20%x %02x:%02x:%02x %s" %(t[4],t[5],t[6],t[2],t[1],t[0],self.w[t[3]-1]))
+        # print("%02x.%02x.20%x %02x:%02x:%02x %s" %(t[4],t[5],t[6],t[2],t[1],t[0],self.w[t[3]-1]))
     
     # Form human-readable year
     def year(self):
@@ -213,9 +213,8 @@ class ds3231(object):
         else:
             dayname = self.w[t[3]-1]
         return dayname
-    
-    # REDO THIS!
-    # Define correct indents in order to be able to center all text
+   
+    # Define correct indents in order to be able to center weekday text
     def day_widthvalue(self):
         weekday = rtc.day_name()
         if weekday == "Montag" or weekday == "Freitag" or weekday == "Samtag":
@@ -235,7 +234,7 @@ rtc = ds3231(I2C_PORT,I2C_SCL,I2C_SDA)
 # If the time has to be set again, uncomment the rtc.set_time line below, enter the     #
 # current time, execute the script once and comment the line again after that.          #
 #                                                                                       #
-# rtc.set_time('12:06:30,Mittwoch,2022-07-13')                                          #
+# rtc.set_time('17:31:30,Mittwoch,2022-07-13')                                          #
 #########################################################################################
 
 
@@ -253,35 +252,55 @@ while True:
     display.set_pen(black)
     display.clear()
     
-    # Choose a white color and draw the time (either hours:minutes or hours:minutes:seconds)
-    display.set_pen(white)
+    # Give integer variables for time a leading zero
+    disphours = "%02d" % (int(rtc.hour()),)
+    dispminutes = "%02d" % (int(rtc.minute()),)
+    dispseconds = "%02d" % (int(rtc.sec()),)
+    
+    # Define some counting variables
+    colon = ":"    
     if showseconds == 0:
-        if colonblink == 0:
-            display.text(rtc.read_time(), 33,8,240, 8)
-            #print(rtc.read_time())
-        else:
-            if (int(rtc.sec()) % 2) == 0:
-                display.text("%02d" % (int(rtc.hour()),) + " " + "%02d" % (int(rtc.minute()),), 33,8,240, 8)
-                #print("%02d" % (int(rtc.hour()),) + " " + "%02d" % (int(rtc.minute()),))
-            else:
-                display.text("%02d" % (int(rtc.hour()),) + ":" + "%02d" % (int(rtc.minute()),), 33,8,240, 8)
-                #print("%02d" % (int(rtc.hour()),) + ":" + "%02d" % (int(rtc.minute()),))
+        disptime = disphours + colon + dispminutes
+        disptime_width = 3   # (two spaces and a colon)
     else:
-        if colonblink == 0:
-            display.text(rtc.read_time() + ":" + "%02d" % (int(rtc.sec()),), 33,8,240, 8)
-            #print(rtc.read_time() + ":" + "%02d" % (int(rtc.sec()),))
-        else:
-            if (int(rtc.sec()) % 2) == 0:
-                display.text("%02d" % (int(rtc.hour()),) + " " + "%02d" % (int(rtc.minute()),) + " " + "%02d" % (int(rtc.sec()),), 12,15,240, 6)
-                #print("%02d" % (int(rtc.hour()),) + " " + "%02d" % (int(rtc.minute()),) + " " + "%02d" % (int(rtc.sec()),))
-            else:
-                display.text("%02d" % (int(rtc.hour()),) + ":" + "%02d" % (int(rtc.minute()),) + ":" + "%02d" % (int(rtc.sec()),), 12,15,240, 6)
-                #print("%02d" % (int(rtc.hour()),) + ":" + "%02d" % (int(rtc.minute()),) + ":" + "%02d" % (int(rtc.sec()),))
+        disptime = disphours + colon + dispminutes + colon + dispseconds
+        disptime_width = 6   # (four spaces and two colons)
+    date_width = 6    # (four spaces and two periods)
+    
+    # Count pixel width of pimoroni font number pixels and multiply by actual display pixels per pimoroni pixel
+    for i in disptime:
+        if i == "1":
+            disptime_width += 2
+        if i == "2" or i == "3" or i == "5":
+            disptime_width += 4
+        if i == "0" or i == "4" or i == "6" or i == "7" or i == "8" or i == "9":
+            disptime_width += 5
+    
+    for i in rtc.read_date():
+        if i == "1":
+            date_width += 2
+        if i == "2" or i == "3" or i == "5":
+            date_width += 4
+        if i == "0" or i == "4" or i == "6" or i == "7" or i == "8" or i == "9":
+            date_width += 5
+    
+    # Set starting point on x-achsis of the display to center text for different font sizes
+    x_start8 = round((width / 2) - ((disptime_width * 9) / 2))
+    x_start6 = round((width / 2) - ((disptime_width * 7.2) / 2))
+    x_start_date = round((width / 2) - ((date_width * 4.6) / 2))
+    
+    # Choose a white color and draw the time
+    display.set_pen(white)
+    display.text(disptime, x_start8, 8, 240, 8)
+    if colonblink == 0:
+        display.text(disptime, x_start8, 8, 240, 8)
+    else:
+        display.text(disphours + colon + dispminutes + colon + dispseconds, x_start6, 15, 240, 6)
         
     # Choose an orange color and draw the day of the week and the date
     display.set_pen(orange)
-    display.text(rtc.day_name(), rtc.day_widthvalue(),75,240,3)
-    display.text(rtc.read_date(), 31,100,240,4)
+    display.text(rtc.day_name(), rtc.day_widthvalue(), 75, 240, 3)
+    display.text(rtc.read_date(), x_start_date, 100, 240, 4)
     
     # Update the display and wait one second before executing the script again
     display.update()
