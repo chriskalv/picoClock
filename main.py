@@ -302,7 +302,7 @@ while True:
     x_start8 = round((width / 2) - ((disptime_width * 9.1) / 2))
     x_start6 = round((width / 2) - ((disptime_width * 6.7) / 2))
     x_start_date = round((width / 2) - ((date_width * 4.5) / 2))
-    x_start_weekday = round((width / 2) - ((dispweekday_width * 3.65) / 2))
+    x_start_weekday = round((width / 2) - ((dispweekday_width * 3.6) / 2))
     
     # Choose a white color and draw the time
     display.set_pen(white)
