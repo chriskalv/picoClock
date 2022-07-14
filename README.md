@@ -6,11 +6,11 @@ Instructions to build a pico-based digital table clock showing the
   + date and 
   + day of the week.
 
-The code is entirely micropython-based and pulls time data from the RTC chip - an internet connection is not needed. Assembly of the device is really easy and even solder-free in case you have a pre-soldered Raspberry Pi Pico.
+The code is entirely micropython-based and pulls time data from the internal RTC chip - an internet connection is not needed. Assembly of the device is really easy and even solder-free in case you have a pre-soldered Raspberry Pi Pico.
 <br></br>
 | Assembled picoClock   |
 | ------------- |
-| [![](https://i.imgur.com/uGB1qjq.png?raw=true)](https://i.imgur.com/uGB1qjq.png)   |
+| [![](https://i.imgur.com/iuxEbno.png?raw=true)](https://i.imgur.com/iuxEbno.png)   |
 
 ## Functionality
 + Button A: Adjust brightness (down).
@@ -31,9 +31,9 @@ The code is entirely micropython-based and pulls time data from the RTC chip - a
     - Drag and drop the downloaded file into the _RPI-RP2_ volume.
     
 2. Download and install [Thonny](https://thonny.org/), open it, click _Run_ --> _Select interpreter_ and choose _MicroPython (Raspberry Pi Pico)_. This will establish a shell connection to your device.
-3. Copy `picoclock.py` over to your device.
-4. If you want, you can choose to display "Happy B-Day" instead of the day of the week on one day of the year. Just edit **Global Settings** at the top of the script in order to do so.
-5. To set the clock, enter your current time, day of the week and date in line 237, uncomment the line and execute it once. After that, comment the line out again and save the script. Your clock has now been set.
+3. Copy `main.py` over to your device.
+4. If you want, you can choose to display "Happy B-Day" instead of the day of the week on one day of the year. Just edit the **Global Settings** at the top of the script in order to do so.
+5. To set the clock, enter your current time, day of the week and date in line 242, uncomment the line and execute it once. After that, comment the line out again and save the script. Your clock has now been set.
 
 ## Case
 I did not make a specific case for this build, but [this one](https://www.printables.com/de/model/237722-raspberry-pi-pico-rtc-display-case) from another build uses the same hardware and should fit fairly well.
